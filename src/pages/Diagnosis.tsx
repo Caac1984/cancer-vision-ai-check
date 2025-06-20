@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import FileUpload from '@/components/FileUpload';
 import ImageViewer from '@/components/ImageViewer';
-import { useToast } from '@/hooks/use-toast';
-import { useModels } from '@/hooks/use-models';
+import { useModels } from '@/hooks/useModels';
 
 interface DiagnosisResult {
   filename: string;
@@ -25,7 +23,6 @@ const Diagnosis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [results, setResults] = useState<DiagnosisResult[]>([]);
-  const { toast } = useToast();
   const { activeModel, loading } = useModels();
 
   const handleFilesSelected = (files: File[]) => {

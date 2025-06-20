@@ -45,6 +45,16 @@ const Training = () => {
     }
   };
 
+  const getFileTypeCounts = () => {
+    const images = trainingFiles.filter(file => file.type.startsWith('image/')).length;
+    const yamls = trainingFiles.filter(file => 
+      file.name.endsWith('.yaml') || file.name.endsWith('.yml')
+    ).length;
+    return { images, yamls };
+  };
+
+  const { images, yamls } = getFileTypeCounts();
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -80,25 +90,41 @@ const Training = () => {
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 title="Dataset de Treinamento"
-                description="Adicione imagens categorizadas (benigno/maligno)"
+                description="Adicione imagens categorizadas e arquivos de configuração"
                 multiple={true}
+                acceptYaml={true}
               />
 
               {trainingFiles.length > 0 && (
                 <div className="medical-gradient-soft p-4 rounded-lg">
                   <h4 className="font-medium text-gray-700 mb-2">Resumo do Dataset:</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Total de imagens:</span>
+                      <span className="text-gray-600">Imagens:</span>
+                      <span className="font-medium ml-2">{images}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Arquivos YAML:</span>
+                      <span className="font-medium ml-2">{yamls}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Total:</span>
                       <span className="font-medium ml-2">{trainingFiles.length}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Tamanho total:</span>
+                      <span className="text-gray-600">Tamanho:</span>
                       <span className="font-medium ml-2">
                         {(trainingFiles.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2)} MB
                       </span>
                     </div>
                   </div>
+                  {yamls > 0 && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                      <p className="text-sm text-blue-700">
+                        📝 Arquivos YAML detectados - serão usados para configuração do treinamento
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
