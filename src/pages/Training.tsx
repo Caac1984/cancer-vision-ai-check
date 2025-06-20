@@ -6,76 +6,44 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import FileUpload from '@/components/FileUpload';
-import { useToast } from '@/hooks/use-toast';
+import { useModels } from '@/hooks/useModels';
+import { useTraining } from '@/hooks/useTraining';
 
 const Training = () => {
   const [modelName, setModelName] = useState('');
   const [trainingFiles, setTrainingFiles] = useState<File[]>([]);
-  const [isTraining, setIsTraining] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState(0);
-  const { toast } = useToast();
+  
+  const { models, loading, updateModelStatus } = useModels();
+  const { isTraining, trainingProgress, startTraining } = useTraining();
 
   const handleFilesSelected = (files: File[]) => {
     setTrainingFiles(prev => [...prev, ...files]);
     console.log('Arquivos selecionados para treinamento:', files);
   };
 
-  const startTraining = async () => {
-    if (!modelName || trainingFiles.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Por favor, defina um nome para o modelo e selecione arquivos de treinamento.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsTraining(true);
-    setTrainingProgress(0);
-
-    // Simulação do processo de treinamento
-    const progressInterval = setInterval(() => {
-      setTrainingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          setIsTraining(false);
-          toast({
-            title: "Treinamento Concluído! 🎉",
-            description: `Modelo "${modelName}" foi treinado com sucesso.`
-          });
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 500);
-
-    console.log('Iniciando treinamento do modelo:', modelName);
-    console.log('Arquivos de treinamento:', trainingFiles);
+  const handleStartTraining = () => {
+    startTraining(modelName, trainingFiles);
+    setModelName('');
+    setTrainingFiles([]);
   };
 
-  const existingModels = [
-    {
-      name: 'CancerDetect v1.0',
-      accuracy: '94.2%',
-      trainedOn: '15/01/2024',
-      samples: 1200,
-      status: 'Ativo'
-    },
-    {
-      name: 'CancerDetect v0.9',
-      accuracy: '91.8%',
-      trainedOn: '10/01/2024',
-      samples: 800,
-      status: 'Arquivado'
-    },
-    {
-      name: 'CancerDetect v0.8',
-      accuracy: '89.5%',
-      trainedOn: '05/01/2024',
-      samples: 600,
-      status: 'Arquivado'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-emerald-100 text-emerald-700';
+      case 'training': return 'bg-blue-100 text-blue-700';
+      case 'archived': return 'bg-gray-100 text-gray-600';
+      default: return 'bg-gray-100 text-gray-600';
     }
-  ];
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Ativo';
+      case 'training': return 'Treinando';
+      case 'archived': return 'Arquivado';
+      default: return 'Desconhecido';
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -148,7 +116,7 @@ const Training = () => {
               )}
 
               <Button
-                onClick={startTraining}
+                onClick={handleStartTraining}
                 disabled={isTraining || !modelName || trainingFiles.length === 0}
                 className="w-full medical-gradient text-white hover-lift shadow-lg disabled:opacity-50"
               >
@@ -168,34 +136,46 @@ const Training = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {existingModels.map((model, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{model.name}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      model.status === 'Ativo' 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {model.status}
-                    </span>
+              {loading ? (
+                <div className="text-center text-gray-500">Carregando modelos...</div>
+              ) : models.length === 0 ? (
+                <div className="text-center text-gray-500">Nenhum modelo encontrado</div>
+              ) : (
+                models.map((model) => (
+                  <div key={model.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900">{model.name}</h4>
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(model.status)}`}>
+                        {getStatusText(model.status)}
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Precisão:</span>
+                        <span className="font-medium">{model.accuracy.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Amostras:</span>
+                        <span>{model.samples}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Treinado em:</span>
+                        <span>{model.trained_on}</span>
+                      </div>
+                    </div>
+                    {model.status !== 'active' && model.status !== 'training' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => updateModelStatus(model.id, 'active')}
+                      >
+                        Ativar Modelo
+                      </Button>
+                    )}
                   </div>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Precisão:</span>
-                      <span className="font-medium">{model.accuracy}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Amostras:</span>
-                      <span>{model.samples}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Treinado em:</span>
-                      <span>{model.trainedOn}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

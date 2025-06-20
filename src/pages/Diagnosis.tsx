@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import FileUpload from '@/components/FileUpload';
 import ImageViewer from '@/components/ImageViewer';
 import { useToast } from '@/hooks/use-toast';
+import { useModels } from '@/hooks/use-models';
 
 interface DiagnosisResult {
   filename: string;
@@ -26,6 +26,7 @@ const Diagnosis = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [results, setResults] = useState<DiagnosisResult[]>([]);
   const { toast } = useToast();
+  const { activeModel, loading } = useModels();
 
   const handleFilesSelected = (files: File[]) => {
     setSelectedFiles(files);
@@ -130,6 +131,15 @@ const Diagnosis = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {!activeModel && !loading && (
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Aviso:</strong> Nenhum modelo ativo encontrado. 
+                    Por favor, treine um modelo na página de Treinamento primeiro.
+                  </p>
+                </div>
+              )}
+
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 title="Imagens para Diagnóstico"
@@ -145,14 +155,14 @@ const Diagnosis = () => {
                   </div>
                   <Progress value={analysisProgress} className="h-3" />
                   <p className="text-sm text-gray-600 text-center">
-                    Processando com modelo de IA treinado
+                    Processando com modelo {activeModel?.name || 'de IA treinado'}
                   </p>
                 </div>
               )}
 
               <Button
                 onClick={analyzeImages}
-                disabled={isAnalyzing || selectedFiles.length === 0}
+                disabled={isAnalyzing || selectedFiles.length === 0 || !activeModel}
                 className="w-full medical-gradient text-white hover-lift shadow-lg disabled:opacity-50"
               >
                 {isAnalyzing ? 'Analisando...' : 'Iniciar Análise'}
@@ -236,23 +246,38 @@ const Diagnosis = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="medical-gradient-soft p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Modelo Ativo</h4>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div className="flex justify-between">
-                    <span>Nome:</span>
-                    <span className="font-medium">CancerDetect v1.0</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Precisão:</span>
-                    <span className="font-medium text-emerald-600">94.2%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Treino:</span>
-                    <span>15/01/2024</span>
+              {loading ? (
+                <div className="text-center text-gray-500">Carregando...</div>
+              ) : activeModel ? (
+                <div className="medical-gradient-soft p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Modelo Ativo</h4>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Nome:</span>
+                      <span className="font-medium">{activeModel.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Precisão:</span>
+                      <span className="font-medium text-emerald-600">{activeModel.accuracy.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Treino:</span>
+                      <span>{activeModel.trained_on}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amostras:</span>
+                      <span>{activeModel.samples}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <h4 className="font-medium text-red-900 mb-2">Nenhum Modelo Ativo</h4>
+                  <p className="text-sm text-red-800">
+                    Você precisa treinar um modelo primeiro na página de Treinamento.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <h4 className="font-medium text-gray-900">Interpretação dos Resultados</h4>
