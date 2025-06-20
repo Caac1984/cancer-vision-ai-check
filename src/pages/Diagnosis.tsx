@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import FileUpload from '@/components/FileUpload';
+import ImageViewer from '@/components/ImageViewer';
 import { useToast } from '@/hooks/use-toast';
 
 interface DiagnosisResult {
   filename: string;
+  file: File;
   prediction: 'Benigno' | 'Maligno' | 'Suspeito';
   confidence: number;
   details: {
@@ -65,6 +67,7 @@ const Diagnosis = () => {
 
       const result: DiagnosisResult = {
         filename: file.name,
+        file: file,
         prediction,
         confidence: maxProb * 100,
         details: {
@@ -178,13 +181,20 @@ const Diagnosis = () => {
                             <p className="text-sm text-gray-500">{result.timestamp}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getResultColor(result.prediction)}`}>
-                            {result.prediction}
-                          </span>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {result.confidence.toFixed(1)}% confiança
-                          </p>
+                        <div className="flex items-center space-x-3">
+                          <ImageViewer 
+                            imageFile={result.file}
+                            prediction={result.prediction}
+                            confidence={result.confidence}
+                          />
+                          <div className="text-right">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getResultColor(result.prediction)}`}>
+                              {result.prediction}
+                            </span>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {result.confidence.toFixed(1)}% confiança
+                            </p>
+                          </div>
                         </div>
                       </div>
                       
