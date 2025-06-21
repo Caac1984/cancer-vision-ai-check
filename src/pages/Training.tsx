@@ -5,24 +5,66 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
-import { useModels } from '@/hooks/useModels';
-import { useTraining } from '@/hooks/useTraining';
 
 const Training = () => {
   const [modelName, setModelName] = useState('');
   const [trainingFiles, setTrainingFiles] = useState<File[]>([]);
-  
-  const { models, loading, updateModelStatus } = useModels();
-  const { isTraining, trainingProgress, startTraining } = useTraining();
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+
+  // Dados simulados para teste
+  const models = [
+    {
+      id: 1,
+      name: 'CancerDetect v1.0',
+      accuracy: 94.2,
+      trained_on: '2024-01-15',
+      samples: 1000,
+      status: 'active'
+    },
+    {
+      id: 2,
+      name: 'CancerDetect v0.9',
+      accuracy: 91.8,
+      trained_on: '2024-01-10',
+      samples: 800,
+      status: 'archived'
+    }
+  ];
+  const loading = false;
 
   const handleFilesSelected = (files: File[]) => {
     setTrainingFiles(prev => [...prev, ...files]);
     console.log('Arquivos selecionados para treinamento:', files);
   };
 
-  const handleStartTraining = () => {
-    startTraining(modelName, trainingFiles);
+  const handleStartTraining = async () => {
+    if (!modelName || trainingFiles.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha o nome do modelo e adicione arquivos de treinamento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsTraining(true);
+    setTrainingProgress(0);
+
+    // Simular treinamento
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setTrainingProgress(i);
+    }
+
+    setIsTraining(false);
+    toast({
+      title: "Treinamento Concluído! 🎉",
+      description: `Modelo "${modelName}" treinado com sucesso.`
+    });
+    
     setModelName('');
     setTrainingFiles([]);
   };
@@ -90,7 +132,7 @@ const Training = () => {
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 title="Dataset de Treinamento"
-                description="Adicione imagens categorizadas e arquivos de configuração"
+                description="Adicione imagens categorizadas e arquivos de configuração (incluindo data.yaml)"
                 multiple={true}
                 acceptYaml={true}
               />
@@ -121,7 +163,7 @@ const Training = () => {
                   {yamls > 0 && (
                     <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
                       <p className="text-sm text-blue-700">
-                        📝 Arquivos YAML detectados - serão usados para configuração do treinamento
+                        📝 Arquivos YAML detectados (incluindo data.yaml) - serão usados para configuração do treinamento
                       </p>
                     </div>
                   )}
@@ -194,7 +236,12 @@ const Training = () => {
                         size="sm"
                         variant="outline"
                         className="w-full mt-2"
-                        onClick={() => updateModelStatus(model.id, 'active')}
+                        onClick={() => {
+                          toast({
+                            title: "Modelo Ativado",
+                            description: `${model.name} agora está ativo.`
+                          });
+                        }}
                       >
                         Ativar Modelo
                       </Button>

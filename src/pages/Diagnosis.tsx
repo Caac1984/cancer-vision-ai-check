@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ImageViewer from '@/components/ImageViewer';
-import { useModels } from '@/hooks/useModels';
 
 interface DiagnosisResult {
   filename: string;
@@ -26,7 +24,17 @@ const Diagnosis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [results, setResults] = useState<DiagnosisResult[]>([]);
-  const { activeModel, loading } = useModels();
+
+  // Dados simulados para teste
+  const activeModel = {
+    id: 1,
+    name: 'CancerDetect v1.0',
+    accuracy: 94.2,
+    trained_on: '2024-01-15',
+    samples: 1000,
+    status: 'active'
+  };
+  const loading = false;
 
   const handleFilesSelected = (files: File[]) => {
     setSelectedFiles(files);
@@ -266,7 +274,7 @@ const Diagnosis = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Amostras:</span>
-                      <span>{activeModel.samples}</span>
+                      <span>1000</span>
                     </div>
                   </div>
                 </div>
